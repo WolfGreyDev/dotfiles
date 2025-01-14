@@ -17,3 +17,6 @@ add_to_path "$HOME/.node/bin"
 # Use project specific binaries before global ones
 add_to_path "vendor/bin"
 add_to_path "node_modules/.bin"
+
+# Required for fast startup of VS-Code
+add_to_path "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
