@@ -12,6 +12,7 @@ brew 'git'
 brew 'grep'
 brew 'mackup'
 brew 'mas' # Mac App Store manager
+brew 'ngrok'
 brew 'pkg-config' # https://github.com/driesvints/dotfiles/issues/20
 brew 'svn' # Needed to install fonts
 
