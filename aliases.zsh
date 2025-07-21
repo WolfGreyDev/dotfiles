@@ -62,3 +62,7 @@ alias gakj="gh auth switch -u KimKJDesigns"
 
 # Brew Stuff
 alias brewupdate="brew update && brew upgrade --greedy"
+
+# Ngrok Stuff
+alias ngrokshare="ngrok http --host-header=rewrite ${PWD##*/}.test"
+alias ngroksharesecure="ngrok http --host-header=rewrite ${PWD##*/}.test:443"
