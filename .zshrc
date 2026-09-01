@@ -1,3 +1,6 @@
+# Used for script timing testing. Comment out unless testing
+# zmodload zsh/zprof
+
 # Path to your dotfiles.
 export DOTFILES=$HOME/.dotfiles
 
@@ -115,32 +118,92 @@ export PHP_INI_SCAN_DIR="$HOME/Library/Application Support/Herd/config/php/":$PH
 # Herd injected NVM configuration
 export NVM_DIR="$HOME/Library/Application Support/Herd/config/nvm"
 
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+# Dynamically load NVM on demand to speed up shell startup
 
+## 1. Dynamically resolve default Node.js version and add its bin to PATH
+if [ -f "$NVM_DIR/alias/default" ]; then
+  local default_val
+  default_val=$(cat "$NVM_DIR/alias/default" 2>/dev/null)
+  default_val="${default_val:-22}"
+
+  if [[ "$default_val" =~ ^[0-9]+$ ]]; then
+    default_val="v$default_val"
+  fi
+
+  local matching_versions=("$NVM_DIR/versions/node/${default_val}"*(N))
+  if [ ${#matching_versions} -gt 0 ]; then
+    export PATH="${matching_versions[-1]}/bin:$PATH"
+  fi
+fi
+
+## 2. Pure Zsh lightweight directory detectors to prevent Herd from triggering NVM on startup
+nvm_find_up() {
+  local path_
+  path_="${PWD}"
+  while [ "${path_}" != "" ] && [ "${path_}" != '.' ] && [ ! -f "${path_}/${1-}" ]; do
+    path_=${path_%/*}
+  done
+  echo "${path_}"
+}
+
+nvm_find_nvmrc() {
+  local dir
+  dir="$(nvm_find_up '.nvmrc')"
+  if [ -e "${dir}/.nvmrc" ]; then
+    echo "${dir}/.nvmrc"
+  fi
+}
+
+## 3. Dynamic on-demand loader for NVM
+_load_nvm() {
+  unset -f nvm npm node pnpm yarn sy nvm_find_nvmrc nvm_find_up
+  if [ -s "$NVM_DIR/nvm.sh" ]; then
+    . "$NVM_DIR/nvm.sh"
+  fi
+  "$@"
+}
+
+## 4. Lazy-loading stubs for interactive shell use
+nvm() { _load_nvm nvm "$@"; }
+npm() { _load_nvm npm "$@"; }
+node() { _load_nvm node "$@"; }
+pnpm() { _load_nvm pnpm "$@"; }
+yarn() { _load_nvm yarn "$@"; }
+sy() { _load_nvm sy "$@"; }
+
+## 5. Load Herd Shell Config
 [[ -f "/Applications/Herd.app/Contents/Resources/config/shell/zshrc.zsh" ]] && builtin source "/Applications/Herd.app/Contents/Resources/config/shell/zshrc.zsh"
+
+# pnpm Path Configuration
+export PNPM_HOME="/Users/wolfgreydev/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
 
 # Herd injected PHP 7.4 configuration.
 export HERD_PHP_74_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/74/"
 
-# Herd injected PHP 8.3 configuration.
-export HERD_PHP_83_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/83/"
-
-# Herd injected PHP 8.2 configuration.
-export HERD_PHP_82_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/82/"
+# Herd injected PHP 8.0 configuration.
+export HERD_PHP_80_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/80/"
 
 # Herd injected PHP 8.1 configuration.
 export HERD_PHP_81_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/81/"
 
-# Herd injected PHP 8.0 configuration.
-export HERD_PHP_80_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/80/"
+# Herd injected PHP 8.2 configuration.
+export HERD_PHP_82_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/82/"
 
-# Herd injected PHP binary.
-export PATH="/Users/wolfgreydev/Library/Application Support/Herd/bin/":$PATH
-
+# Herd injected PHP 8.3 configuration.
+export HERD_PHP_83_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/83/"
 
 # Herd injected PHP 8.4 configuration.
 export HERD_PHP_84_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/84/"
 
+# Herd injected PHP 8.5 configuration.
+export HERD_PHP_85_INI_SCAN_DIR="/Users/wolfgreydev/Library/Application Support/Herd/config/php/85/"
 
 # Herd injected PHP binary.
 export PATH="/Users/wolfgreydev/Library/Application Support/Herd/bin/":$PATH
+
+# End of time testing
+# zprof
